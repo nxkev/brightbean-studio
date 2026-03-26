@@ -50,8 +50,7 @@ def get_checklist_items(workspace):
             "key": "set_approval",
             "title": "Set approval workflow",
             "description": "Choose how posts get reviewed before publishing",
-            "completed": workspace.approval_workflow_mode
-            != Workspace.ApprovalWorkflowMode.NONE,
+            "completed": workspace.approval_workflow_mode != Workspace.ApprovalWorkflowMode.NONE,
             "url": reverse("settings_manager:index"),
             "icon_color": "indigo",
             "icon_svg": '<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',

@@ -10,56 +10,106 @@ import apps.onboarding.models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('social_accounts', '0001_initial'),
-        ('workspaces', '0001_initial'),
+        ("social_accounts", "0001_initial"),
+        ("workspaces", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ConnectionLink',
+            name="ConnectionLink",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('token', models.CharField(db_index=True, default=apps.onboarding.models._generate_connection_token, max_length=255, unique=True)),
-                ('expires_at', models.DateTimeField()),
-                ('revoked_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('created_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_connection_links', to=settings.AUTH_USER_MODEL)),
-                ('workspace', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='connection_links', to='workspaces.workspace')),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                (
+                    "token",
+                    models.CharField(
+                        db_index=True,
+                        default=apps.onboarding.models._generate_connection_token,
+                        max_length=255,
+                        unique=True,
+                    ),
+                ),
+                ("expires_at", models.DateTimeField()),
+                ("revoked_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_connection_links",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "workspace",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="connection_links",
+                        to="workspaces.workspace",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'onboarding_connection_link',
+                "db_table": "onboarding_connection_link",
             },
         ),
         migrations.CreateModel(
-            name='ConnectionLinkUsage',
+            name="ConnectionLinkUsage",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('connected_at', models.DateTimeField(auto_now_add=True)),
-                ('connection_link', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='usages', to='onboarding.connectionlink')),
-                ('social_account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='connection_link_usages', to='social_accounts.socialaccount')),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("connected_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "connection_link",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="usages",
+                        to="onboarding.connectionlink",
+                    ),
+                ),
+                (
+                    "social_account",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="connection_link_usages",
+                        to="social_accounts.socialaccount",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'onboarding_connection_link_usage',
-                'unique_together': {('connection_link', 'social_account')},
+                "db_table": "onboarding_connection_link_usage",
+                "unique_together": {("connection_link", "social_account")},
             },
         ),
         migrations.CreateModel(
-            name='OnboardingChecklist',
+            name="OnboardingChecklist",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('is_dismissed', models.BooleanField(default=False)),
-                ('dismissed_at', models.DateTimeField(blank=True, null=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='onboarding_checklists', to=settings.AUTH_USER_MODEL)),
-                ('workspace', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='onboarding_checklists', to='workspaces.workspace')),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("is_dismissed", models.BooleanField(default=False)),
+                ("dismissed_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="onboarding_checklists",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "workspace",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="onboarding_checklists",
+                        to="workspaces.workspace",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'onboarding_checklist',
-                'unique_together': {('user', 'workspace')},
+                "db_table": "onboarding_checklist",
+                "unique_together": {("user", "workspace")},
             },
         ),
     ]
