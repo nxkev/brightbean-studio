@@ -3,23 +3,12 @@
 
 {% block title %}{% if is_edit %}Edit Post{% else %}New Post{% endif %} — {{ workspace.name }} — Postbean{% endblock %}
 
-{% block page_header %}
-<div class="flex items-center gap-3">
-    <a href="{% url 'calendar:calendar' workspace_id=workspace.id %}"
-       class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-stone-200 text-stone-400 hover:text-stone-700 hover:border-stone-300 hover:bg-stone-50 transition-all duration-150">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-    </a>
-    <div>
-        <h1 class="text-base font-semibold text-stone-900" style="font-family: Georgia, 'Times New Roman', serif; letter-spacing: -0.01em;">{% if is_edit %}Edit Post{% else %}Compose{% endif %}</h1>
-        <p class="text-xs text-stone-400 -mt-0.5">{{ workspace.name }}</p>
-    </div>
-</div>
-{% endblock %}
+{% comment %}Header is rendered inside the content block to avoid overlap with the -m-6 layout{% endcomment %}
 
 {% block extra_head %}
 <style>
     /* ── Composer-specific overrides ──────────────────────────── */
-    .composer-main { padding: 0 !important; }
+    .composer-main { padding: 0 !important; overflow: hidden; }
 
     /* Panels */
     .panel-left   { width: 272px; flex-shrink: 0; }
@@ -197,10 +186,25 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex h-[calc(100vh-120px)] -m-6 composer-main"
+<div class="-m-6 composer-main flex flex-col h-[calc(100vh-44px)]"
      x-data="composerApp()"
      @keydown.meta.s.prevent="saveDraft()"
      @keydown.ctrl.s.prevent="saveDraft()">
+
+    <!-- Page header -->
+    <div class="flex items-center gap-3 px-6 py-3 border-b border-stone-100 flex-shrink-0">
+        <a href="{% url 'composer:create_landing' workspace_id=workspace.id %}"
+           class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-stone-200 text-stone-400 hover:text-stone-700 hover:border-stone-300 hover:bg-stone-50 transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+            <h1 class="text-base font-semibold text-stone-900" style="font-family: Georgia, 'Times New Roman', serif; letter-spacing: -0.01em;">{% if is_edit %}Edit Post{% else %}Compose{% endif %}</h1>
+            <p class="text-xs text-stone-400 -mt-0.5">{{ workspace.name }}</p>
+        </div>
+    </div>
+
+    <!-- Panels -->
+    <div class="flex flex-1 min-h-0">
 
     <!-- ════════════════════════════════════════════════════════════
          LEFT PANEL — Platform Selector + Media
@@ -481,6 +485,8 @@
             {% include "composer/partials/preview_panel.html" %}
         </div>
     </div>
+
+    </div><!-- /panels -->
 
     <!-- ════════════════════════════════════════════════════════════
          MEDIA PICKER MODAL
