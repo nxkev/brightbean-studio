@@ -10,7 +10,7 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from apps.members.decorators import require_org_role
+from apps.members.decorators import require_org_role, require_permission
 
 from .models import MediaAsset, MediaFolder
 from .services import (
@@ -73,12 +73,12 @@ def library_index(request, workspace_id):
     # Sort
     sort = request.GET.get("sort", "-created_at")
     sort_options = {
-        "name": "original_filename",
-        "-name": "-original_filename",
+        "name": "filename",
+        "-name": "-filename",
         "date": "created_at",
         "-date": "-created_at",
-        "size": "file_size_bytes",
-        "-size": "-file_size_bytes",
+        "size": "file_size",
+        "-size": "-file_size",
     }
     qs = qs.order_by(sort_options.get(sort, "-created_at"))
 
@@ -122,6 +122,7 @@ def library_index(request, workspace_id):
 # ──────────────────────────────────────────────────────────────
 
 @login_required
+@require_permission("upload_media")
 @require_POST
 def upload(request, workspace_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -232,6 +233,7 @@ def asset_detail(request, workspace_id, asset_id):
 # ──────────────────────────────────────────────────────────────
 
 @login_required
+@require_permission("edit_media")
 @require_http_methods(["GET", "POST"])
 def asset_edit(request, workspace_id, asset_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -316,6 +318,7 @@ def asset_edit(request, workspace_id, asset_id):
 # ──────────────────────────────────────────────────────────────
 
 @login_required
+@require_permission("upload_media")
 @require_POST
 def asset_star_toggle(request, workspace_id, asset_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -338,6 +341,7 @@ def asset_star_toggle(request, workspace_id, asset_id):
 
 
 @login_required
+@require_permission("edit_media")
 @require_POST
 def asset_update_tags(request, workspace_id, asset_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -364,6 +368,7 @@ def asset_update_tags(request, workspace_id, asset_id):
 
 
 @login_required
+@require_permission("edit_media")
 @require_POST
 def asset_move(request, workspace_id, asset_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -389,6 +394,7 @@ def asset_move(request, workspace_id, asset_id):
 
 
 @login_required
+@require_permission("delete_media")
 @require_POST
 def asset_delete(request, workspace_id, asset_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -453,6 +459,7 @@ def asset_download(request, workspace_id, asset_id):
 # ──────────────────────────────────────────────────────────────
 
 @login_required
+@require_permission("manage_media")
 @require_POST
 def folder_create(request, workspace_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -489,6 +496,7 @@ def folder_create(request, workspace_id):
 
 
 @login_required
+@require_permission("manage_media")
 @require_POST
 def folder_rename(request, workspace_id, folder_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -514,6 +522,7 @@ def folder_rename(request, workspace_id, folder_id):
 
 
 @login_required
+@require_permission("manage_media")
 @require_POST
 def folder_delete(request, workspace_id, folder_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -593,6 +602,7 @@ def version_list(request, workspace_id, asset_id):
 
 
 @login_required
+@require_permission("edit_media")
 @require_POST
 def version_restore(request, workspace_id, asset_id, version_id):
     workspace = _get_workspace_or_404(request, workspace_id)
@@ -630,7 +640,7 @@ def processing_status(request, workspace_id, asset_id):
         pk=asset_id,
     )
 
-    if request.htmx and asset.processing_status == MediaAsset.ProcessingStatus.COMPLETE:
+    if request.htmx and asset.processing_status == MediaAsset.ProcessingStatus.COMPLETED:
         # Return the completed asset card to replace the placeholder
         return render(request, "media_library/_asset_card.html", {
             "asset": asset,
@@ -668,12 +678,12 @@ def shared_library_index(request):
 
     sort = request.GET.get("sort", "-created_at")
     sort_options = {
-        "name": "original_filename",
-        "-name": "-original_filename",
+        "name": "filename",
+        "-name": "-filename",
         "date": "created_at",
         "-date": "-created_at",
-        "size": "file_size_bytes",
-        "-size": "-file_size_bytes",
+        "size": "file_size",
+        "-size": "-file_size",
     }
     qs = qs.order_by(sort_options.get(sort, "-created_at"))
 
@@ -683,10 +693,9 @@ def shared_library_index(request):
     is_admin = request.org_membership and request.org_membership.org_role in ("owner", "admin")
 
     if request.htmx:
-        return render(request, "media_library/_asset_grid.html", {
+        return render(request, "media_library/_shared_asset_grid.html", {
             "page": page,
             "query": query,
-            "is_shared_library": True,
         })
 
     return render(request, "media_library/shared_library.html", {
@@ -738,9 +747,8 @@ def shared_upload(request):
         assets = MediaAsset.objects.filter(
             id__in=[r["id"] for r in results if r["status"] == "ok"]
         )
-        return render(request, "media_library/_asset_grid_items.html", {
+        return render(request, "media_library/_shared_asset_grid_items.html", {
             "assets": assets,
-            "is_shared_library": True,
         })
 
     return JsonResponse({"results": results})
