@@ -110,5 +110,6 @@ def cross_workspace_calendar(request):
         "next_date": next_month.isoformat(),
         "target_date": target_date,
         "day_names": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "settings_active": "calendars",
     }
     return render(request, "organizations/cross_calendar.html", context)
