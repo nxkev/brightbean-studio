@@ -11,7 +11,16 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
     <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
     <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
-    <style>[x-cloak] { display: none !important; }</style>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    <script>
+        // Set sidebar width before first paint to prevent flash
+        document.documentElement.style.setProperty(
+            '--sidebar-initial-w',
+            localStorage.getItem('sidebarCollapsed') === 'true' ? '60px' : '240px'
+        );
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="text-gray-900 min-h-screen" style="background: var(--surface-page);">
@@ -27,8 +36,10 @@
          x-data="{ sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
          x-effect="localStorage.setItem('sidebarCollapsed', sidebarCollapsed)">
         <!-- Sidebar -->
-        <aside class="flex flex-col flex-shrink-0 transition-all duration-200"
-               :class="sidebarCollapsed ? 'w-[60px] sidebar-collapsed' : 'w-60'">
+        <aside class="flex flex-col flex-shrink-0"
+               style="width: var(--sidebar-initial-w)"
+               :class="sidebarCollapsed ? 'w-[60px] sidebar-collapsed' : 'w-60'"
+               x-init="$el.style.removeProperty('width'); $nextTick(() => $el.classList.add('transition-all', 'duration-200'))"
 
             <!-- Workspace switcher (top of sidebar) -->
             <div class="relative border-b border-stone-100" x-data="{ wsOpen: false }">
