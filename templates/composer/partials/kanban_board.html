@@ -58,7 +58,12 @@
                  draggable="true"
                  @dragstart="startDrag($event, '{{ idea.id }}')"
                  @dragend="endDrag($event)"
-                 @click="openEdit('{{ idea.id }}', '{{ idea.title|escapejs }}', '{{ idea.description|escapejs }}', '{{ idea.tags|join:"," }}', '{{ col.id }}')">
+                 @click="openEdit('{{ idea.id }}', '{{ idea.title|escapejs }}', '{{ idea.description|escapejs }}', '{{ idea.tags|join:"," }}', '{{ col.id }}', '{{ idea.media_asset.file.url|default:"" }}', '{{ idea.media_asset.filename|default:"" }}')">
+                {% if idea.media_asset %}
+                <div class="-mx-3 -mt-3 mb-2 rounded-t-lg overflow-hidden">
+                    <img src="{{ idea.media_asset.file.url }}" alt="" class="w-full h-[100px] object-cover">
+                </div>
+                {% endif %}
                 <h4 class="text-sm font-semibold text-stone-800 mb-1">{{ idea.title }}</h4>
                 {% if idea.description %}
                 <p class="text-xs text-stone-500 line-clamp-2">{{ idea.description|truncatechars:120 }}</p>

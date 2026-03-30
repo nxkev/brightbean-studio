@@ -1,6 +1,6 @@
 {% comment %}
 Media Library picker modal content — loaded via HTMX.
-Context: assets, workspace.
+Context: assets, workspace, post (optional).
 {% endcomment %}
 
 {% if assets %}
@@ -9,13 +9,17 @@ Context: assets, workspace.
     <div class="group relative rounded-xl overflow-hidden border border-stone-200 aspect-square cursor-pointer hover:border-orange-400 hover:shadow-md transition-all duration-150"
          {% if post %}
          hx-post="{% url 'composer:attach_media' workspace_id=workspace.id post_id=post.id %}"
+         {% else %}
+         hx-post="{% url 'composer:attach_pending_media' workspace_id=workspace.id %}"
+         {% endif %}
          hx-vals='{"media_asset_id": "{{ asset.id }}"}'
          hx-target="#media-list"
          hx-swap="innerHTML"
-         @click="showMediaPicker = false"
-         {% endif %}>
+         @click="showMediaPicker = false">
         {% if asset.thumbnail %}
         <img src="{{ asset.thumbnail.url }}" class="w-full h-full object-cover" alt="{{ asset.filename }}">
+        {% elif asset.is_video and asset.file %}
+        <video src="{{ asset.file.url }}#t=0.5" class="w-full h-full object-cover" muted preload="metadata"></video>
         {% elif asset.file %}
         <img src="{{ asset.file.url }}" class="w-full h-full object-cover" alt="{{ asset.filename }}">
         {% else %}

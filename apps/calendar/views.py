@@ -125,11 +125,10 @@ def _get_publish_context(workspace, request):
         .order_by("platform", "account_name")
     )
 
-    # All unique tags across workspace posts
-    all_tags = set()
-    for post_tags in Post.objects.for_workspace(workspace.id).values_list("tags", flat=True):
-        if post_tags:
-            all_tags.update(post_tags)
+    # All workspace tags from the Tag model
+    from apps.composer.models import Tag
+
+    all_tags = set(Tag.objects.for_workspace(workspace.id).values_list("name", flat=True))
 
     # Display timezone
     ws_tz = workspace.effective_timezone or "UTC"
