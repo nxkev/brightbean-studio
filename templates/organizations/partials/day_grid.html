@@ -1,0 +1,27 @@
+{% comment %}
+Org calendar day view — single-day timeline with hourly divisions.
+Context: posts_by_hour, hours, target_date, default_workspace.
+{% endcomment %}
+
+<div class="bg-white mx-auto" style="animation: slideUp 200ms cubic-bezier(0.16,1,0.3,1) both; max-height: calc(100vh - 260px); overflow-y: auto;">
+    {% for hour in hours %}
+    <div class="flex border-b border-stone-100 min-h-[64px] cal-add-cell" style="position: relative;">
+        <!-- Time label -->
+        <div class="w-20 flex-shrink-0 border-r border-stone-200 px-3 py-2 text-right">
+            <span class="text-xs font-medium text-stone-400 tabular-nums">
+                {% if hour < 10 %}0{% endif %}{{ hour }}:00
+            </span>
+        </div>
+        <!-- Posts in this hour -->
+        <div class="flex-1 p-2 space-y-1">
+            {% if default_workspace %}
+            <a href="{% url 'composer:compose' workspace_id=default_workspace.id %}?scheduled_date={{ target_date|date:'Y-m-d' }}&scheduled_time={{ hour }}:00" class="cal-add-btn" style="position:static; margin-left:auto;" title="Create post">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            </a>
+            {% endif %}
+            {% with hour_posts=posts_by_hour|default_if_none:"" %}
+            {% endwith %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
