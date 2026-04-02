@@ -39,6 +39,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Workspace persistence
     last_workspace_id = models.UUIDField(blank=True, null=True)
 
+    # Terms of Service acceptance (null = not yet accepted)
+    tos_accepted_at = models.DateTimeField(blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

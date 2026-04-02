@@ -1,6 +1,7 @@
 from allauth.account.signals import user_signed_up
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 
 def provision_organization_and_workspace(user):
@@ -98,6 +99,12 @@ def create_organization_on_signup(sender, request, user, **kwargs):
     # No invite or invite failed — ensure default provisioning happened.
     # post_save already handled this, so this is a no-op (idempotent guard).
     provision_organization_and_workspace(user)
+
+    # Email signups see ToS text on the signup form, so auto-accept.
+    # Social signups (Google OAuth) will be redirected to a dedicated ToS page.
+    if not kwargs.get("sociallogin"):
+        user.tos_accepted_at = timezone.now()
+        user.save(update_fields=["tos_accepted_at"])
 
 
 @receiver(post_save, sender="accounts.User")
