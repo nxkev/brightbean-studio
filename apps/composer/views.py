@@ -75,6 +75,23 @@ def _sync_platform_posts(request, post, workspace):
         pp.platform_specific_title = override_title if override_title else None
         pp.platform_specific_caption = override_caption if override_caption else None
         pp.platform_specific_first_comment = override_comment if override_comment else None
+
+        # Per-platform extras
+        if account.platform == "youtube":
+            tags_raw = request.POST.get(f"yt_tags_{acc_id}", "")
+            tags_list = [t.strip() for t in tags_raw.split(",") if t.strip()]
+            privacy_status = request.POST.get(f"yt_privacy_status_{acc_id}", "public")
+            if privacy_status not in ("public", "unlisted", "private"):
+                privacy_status = "public"
+            thumb_id = request.POST.get(f"yt_thumbnail_asset_id_{acc_id}", "").strip() or None
+            pp.platform_extra = {
+                "privacy_status": privacy_status,
+                "self_declared_made_for_kids":
+                    request.POST.get(f"yt_made_for_kids_{acc_id}") == "true",
+                "tags": tags_list,
+                "thumbnail_asset_id": thumb_id,
+            }
+
         pp.save()
 
 
@@ -96,6 +113,7 @@ def _save_version(post, user):
                 "title_override": pp.platform_specific_title,
                 "caption_override": pp.platform_specific_caption,
                 "first_comment_override": pp.platform_specific_first_comment,
+                "platform_extra": pp.platform_extra or {},
             }
             for pp in post.platform_posts.select_related("social_account")
         ],
@@ -199,6 +217,10 @@ def compose(request, workspace_id, post_id=None):
         form = PostForm(instance=post)
         selected_account_ids = list(post.platform_posts.values_list("social_account_id", flat=True))
         media_attachments = post.media_attachments.select_related("media_asset").all()
+        platform_extras = {
+            str(pp.social_account_id): (pp.platform_extra or {})
+            for pp in post.platform_posts.all()
+        }
     else:
         post = None
         # Pre-fill scheduled date/time from query params (e.g. when coming from calendar "+" CTA)
@@ -223,6 +245,7 @@ def compose(request, workspace_id, post_id=None):
         form = PostForm(initial=initial)
         selected_account_ids = []
         media_attachments = []
+        platform_extras = {}
 
     # Clear any stale pending media from previous compose sessions.
     # Each compose page load starts fresh; the upload flow re-populates
@@ -325,12 +348,33 @@ def compose(request, workspace_id, post_id=None):
                 }
             )
 
+    # Resolve thumbnail URLs for any per-account YouTube thumbnails already saved
+    thumb_ids = [
+        extra.get("thumbnail_asset_id")
+        for extra in platform_extras.values()
+        if extra.get("thumbnail_asset_id")
+    ]
+    thumb_url_map = {}
+    if thumb_ids:
+        for asset in MediaAsset.objects.filter(id__in=thumb_ids, workspace=workspace):
+            url = ""
+            if asset.thumbnail:
+                url = asset.thumbnail.url
+            elif asset.file:
+                url = asset.file.url
+            thumb_url_map[str(asset.id)] = url
+    for acc_id, extra in platform_extras.items():
+        tid = extra.get("thumbnail_asset_id")
+        if tid and tid in thumb_url_map:
+            extra["thumbnail_url"] = thumb_url_map[tid]
+
     context = {
         "workspace": workspace,
         "post": post,
         "form": form,
         "social_accounts": social_accounts,
         "selected_account_ids": [str(aid) for aid in selected_account_ids],
+        "platform_extras_json": json.dumps(platform_extras),
         "media_attachments": media_attachments,
         "media_items": media_items,
         "char_limits_json": json.dumps(char_limits),
@@ -608,6 +652,23 @@ def save_post(request, workspace_id, post_id=None):
         pp.platform_specific_title = override_title if override_title else None
         pp.platform_specific_caption = override_caption if override_caption else None
         pp.platform_specific_first_comment = override_comment if override_comment else None
+
+        # Per-platform extras
+        if account.platform == "youtube":
+            tags_raw = request.POST.get(f"yt_tags_{acc_id}", "")
+            tags_list = [t.strip() for t in tags_raw.split(",") if t.strip()]
+            privacy_status = request.POST.get(f"yt_privacy_status_{acc_id}", "public")
+            if privacy_status not in ("public", "unlisted", "private"):
+                privacy_status = "public"
+            thumb_id = request.POST.get(f"yt_thumbnail_asset_id_{acc_id}", "").strip() or None
+            pp.platform_extra = {
+                "privacy_status": privacy_status,
+                "self_declared_made_for_kids":
+                    request.POST.get(f"yt_made_for_kids_{acc_id}") == "true",
+                "tags": tags_list,
+                "thumbnail_asset_id": thumb_id,
+            }
+
         pp.save()
 
     # Propagate manually-chosen schedule/publish_now datetimes to every
@@ -829,6 +890,75 @@ def media_picker(request, workspace_id, post_id=None):
             "workspace": workspace,
             "post": post,
         },
+    )
+
+
+@login_required
+@require_GET
+def thumbnail_picker(request, workspace_id):
+    """Modal picker for selecting an image asset as a YouTube thumbnail.
+
+    Image-only, selection dispatches a client-side event; does not attach
+    anything server-side.
+    """
+    workspace = _get_workspace(request, workspace_id)
+    from apps.media_library.models import MediaAsset
+
+    assets = (
+        MediaAsset.objects.for_workspace(workspace.id)
+        .filter(media_type=MediaAsset.MediaType.IMAGE)
+        .order_by("-created_at")[:50]
+    )
+    return render(
+        request,
+        "composer/partials/thumbnail_picker.html",
+        {"assets": assets, "workspace": workspace},
+    )
+
+
+@login_required
+@require_POST
+def thumbnail_upload(request, workspace_id):
+    """Upload an image from the local machine to the media library and return
+    its id + URL so the composer can wire it as a YouTube thumbnail.
+
+    Image-only. Returns JSON with asset_id, url, filename.
+    """
+    workspace = _get_workspace(request, workspace_id)
+    uploaded_file = request.FILES.get("file")
+
+    if not uploaded_file:
+        return JsonResponse({"error": "No file provided"}, status=400)
+
+    content_type = uploaded_file.content_type or ""
+    if not content_type.startswith("image/"):
+        return JsonResponse({"error": "Only image files are allowed"}, status=400)
+
+    from apps.media_library.models import MediaAsset
+
+    asset = MediaAsset.objects.create(
+        workspace=workspace,
+        uploaded_by=request.user,
+        file=uploaded_file,
+        filename=uploaded_file.name,
+        media_type=MediaAsset.MediaType.IMAGE,
+        mime_type=content_type,
+        file_size=uploaded_file.size,
+        source="upload",
+    )
+
+    url = ""
+    if asset.thumbnail:
+        url = asset.thumbnail.url
+    elif asset.file:
+        url = asset.file.url
+
+    return JsonResponse(
+        {
+            "asset_id": str(asset.id),
+            "url": url,
+            "filename": asset.filename,
+        }
     )
 
 

@@ -294,6 +294,31 @@ class PublishEngine:
                 tmp.close()
                 media_files.append(tmp.name)
 
+            # Merge per-platform extras (e.g. YouTube privacy_status, custom
+            # tags, thumbnail) on top of the base extra dict.
+            extra = {"tags": platform_post.post.tags or []}
+            platform_extra = platform_post.platform_extra or {}
+            extra.update(platform_extra)
+
+            # Resolve thumbnail_asset_id → temp file path for providers that
+            # need to upload a custom thumbnail (YouTube).
+            thumb_asset_id = extra.pop("thumbnail_asset_id", None)
+            if thumb_asset_id:
+                from apps.media_library.models import MediaAsset
+                try:
+                    thumb_asset = MediaAsset.objects.get(id=thumb_asset_id)
+                    if thumb_asset.file:
+                        suffix = os.path.splitext(thumb_asset.filename)[1] or ".jpg"
+                        tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+                        temp_files.append(tmp.name)
+                        with thumb_asset.file.open("rb") as src:
+                            for chunk in iter(lambda: src.read(8192), b""):
+                                tmp.write(chunk)
+                        tmp.close()
+                        extra["thumbnail_file"] = tmp.name
+                except MediaAsset.DoesNotExist:
+                    logger.warning("Thumbnail asset %s not found", thumb_asset_id)
+
             content = PublishContent(
                 text=platform_post.effective_caption or "",
                 title=platform_post.effective_title,
@@ -301,7 +326,7 @@ class PublishEngine:
                 first_comment=platform_post.effective_first_comment,
                 media_files=media_files,
                 post_type=post_type,
-                extra={"tags": platform_post.post.tags or []},
+                extra=extra,
             )
 
             logger.info(

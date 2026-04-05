@@ -196,7 +196,7 @@ class YouTubeProvider(SocialProvider):
         if content.post_type == PostType.SHORT and "#Shorts" not in title:
             title = f"{title} #Shorts".strip()
 
-        privacy_status = content.extra.get("privacy_status", "private")
+        privacy_status = content.extra.get("privacy_status", "public")
         made_for_kids = content.extra.get("self_declared_made_for_kids", False)
         category_id = content.extra.get("category_id", "22")  # 22 = People & Blogs
         tags = content.extra.get("tags", [])
@@ -247,6 +247,33 @@ class YouTubeProvider(SocialProvider):
             )
             upload_body = upload_resp.json()
             video_id = upload_body.get("id", "")
+
+            # Step 3 (optional): upload custom thumbnail
+            thumbnail_path = content.extra.get("thumbnail_file")
+            if video_id and thumbnail_path:
+                try:
+                    with open(thumbnail_path, "rb") as tf:
+                        thumb_data = tf.read()
+                    # Guess content type from extension
+                    ext = thumbnail_path.lower().rsplit(".", 1)[-1]
+                    thumb_ct = "image/png" if ext == "png" else "image/jpeg"
+                    self._request(
+                        "POST",
+                        f"{UPLOAD_BASE}/thumbnails/set",
+                        access_token=access_token,
+                        params={"videoId": video_id, "uploadType": "media"},
+                        headers={
+                            "Content-Type": thumb_ct,
+                            "Content-Length": str(len(thumb_data)),
+                        },
+                        data=thumb_data,
+                        timeout=60.0,
+                    )
+                except Exception:
+                    logger.exception(
+                        "Custom thumbnail upload failed for video %s", video_id
+                    )
+
             return PublishResult(
                 platform_post_id=video_id,
                 url=f"https://www.youtube.com/watch?v={video_id}" if video_id else None,

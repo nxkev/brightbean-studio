@@ -106,6 +106,7 @@ class SocialAccount(models.Model):
             "title_max_length": 100,
             "title_label": "Video Title",
             "caption_label": "Description",
+            "advanced_fields": ["made_for_kids", "privacy_status", "tags", "thumbnail"],
         },
         "pinterest": {
             "needs_title": True,
@@ -120,6 +121,7 @@ class SocialAccount(models.Model):
         "title_max_length": 0,
         "title_label": "Title",
         "caption_label": "Caption",
+        "advanced_fields": [],
     }
 
     @property

@@ -404,6 +404,11 @@ class PlatformPost(models.Model):
         help_text="JSON list of media asset IDs with platform-specific ordering/cropping.",
     )
     platform_specific_first_comment = models.TextField(blank=True, null=True)
+    platform_extra = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Per-platform metadata (privacy, tags, thumbnail_asset_id, etc.)",
+    )
 
     # Publishing state
     platform_post_id = models.CharField(
