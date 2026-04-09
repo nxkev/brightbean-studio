@@ -115,7 +115,14 @@ class SocialAccount(models.Model):
             "title_max_length": 100,
             "title_label": "Pin Title",
             "caption_label": "Description",
+            "supports_first_comment": False,
             "advanced_fields": ["allow_comments", "show_similar_products", "alt_text", "cover_image"],
+        },
+        "bluesky": {
+            "supports_first_comment": False,
+        },
+        "google_business": {
+            "supports_first_comment": False,
         },
     }
 
@@ -124,6 +131,7 @@ class SocialAccount(models.Model):
         "title_max_length": 0,
         "title_label": "Title",
         "caption_label": "Caption",
+        "supports_first_comment": True,
         "advanced_fields": [],
     }
 

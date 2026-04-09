@@ -735,14 +735,18 @@
                     </div>
                 </template>
 
-                <!-- First Comment -->
-                <div>
+                <!-- First Comment (conditional - only when a platform supporting comments is selected) -->
+                <div x-show="anyPlatformSupportsFirstComment" x-transition x-cloak>
                     <label class="block text-sm font-semibold text-stone-500 uppercase tracking-wider mb-2">First Comment</label>
                     <textarea name="first_comment"
                               class="comment-editor"
                               placeholder="First comment posted after the main post…"
                               rows="1">{{ form.first_comment.value|default:"" }}</textarea>
                 </div>
+                <!-- Hidden first_comment field for form submission when section is hidden -->
+                <template x-if="!anyPlatformSupportsFirstComment">
+                    <input type="hidden" name="first_comment" value="{{ form.first_comment.value|default:"" }}">
+                </template>
 
                 <!-- Content Category -->
                 {% if categories %}
@@ -1404,6 +1408,9 @@ function composerApp() {
         get captionLabel() {
             if (this.anyPlatformNeedsTitle) return 'Caption / Description';
             return 'Caption';
+        },
+        get anyPlatformSupportsFirstComment() {
+            return this.selectedAccounts.some(id => this.charLimits[id]?.supports_first_comment);
         },
         get autoSuggestedTitle() {
             if (!this.caption) return '';
