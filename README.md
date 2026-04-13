@@ -119,7 +119,7 @@ DATABASE_URL=postgres://postgres:postgres@postgres:5432/brightbean
 Then start everything:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 docker compose exec app python manage.py migrate
 docker compose exec app python manage.py createsuperuser
 ```
