@@ -768,8 +768,9 @@
                 <hr class="border-stone-200">
 
                 <!-- Tags (dropdown with search & create) -->
+                {{ post.tags|json_script:"post-tags-data" }}
                 <div class="relative" x-data="{
-                    tags: {{ post.tags|default:'[]'|safe }},
+                    tags: JSON.parse(document.getElementById('post-tags-data').textContent) || [],
                     tagDropdownOpen: false,
                     tagSearch: '',
                     allTags: [{% for tag in all_tags %}'{{ tag.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],

@@ -256,7 +256,15 @@ class PublishEngine:
                     account.id,
                 )
         elif platform == "bluesky" and account.instance_url:
-            credentials["pds_url"] = account.instance_url
+            from apps.common.validators import is_safe_url as is_safe_bluesky_url
+
+            if is_safe_bluesky_url(account.instance_url):
+                credentials["pds_url"] = account.instance_url
+            else:
+                logger.warning(
+                    "Bluesky PDS URL failed SSRF check for account %s",
+                    account.id,
+                )
 
         provider = get_provider(platform, credentials)
 

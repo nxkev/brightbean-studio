@@ -1,6 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -150,12 +152,15 @@ def _handle_password_update(request, user):
         messages.error(request, "New password cannot be empty.")
         return
 
-    if len(password) < 8:
-        messages.error(request, "New password must be at least 8 characters.")
-        return
-
     if password != password_confirm:
         messages.error(request, "New passwords do not match.")
+        return
+
+    try:
+        validate_password(password, user)
+    except ValidationError as e:
+        for error in e.messages:
+            messages.error(request, error)
         return
 
     user.set_password(password)

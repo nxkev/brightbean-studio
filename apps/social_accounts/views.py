@@ -47,6 +47,9 @@ def _get_provider_for_platform(platform: str, org_id, **extra_credentials):
     return get_provider(platform, credentials)
 
 
+_CREDENTIAL_FREE_PLATFORMS = {"bluesky", "mastodon"}
+
+
 def _get_configured_platforms(org_id):
     """Return set of platform names that have credentials configured."""
     configured = set(
@@ -56,6 +59,8 @@ def _get_configured_platforms(org_id):
     for platform, creds in env_creds.items():
         if any(v for v in creds.values()):
             configured.add(platform)
+    # Bluesky and Mastodon don't require app-level credentials
+    configured.update(_CREDENTIAL_FREE_PLATFORMS)
     return configured
 
 

@@ -28,6 +28,11 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.production \
     DATABASE_URL=sqlite:///tmp/build.db \
     python manage.py collectstatic --noinput
 
+# Run as non-root user
+RUN addgroup --system app && adduser --system --ingroup app app
+RUN chown -R app:app /app
+USER app
+
 EXPOSE 8000
 
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4", "--threads", "2"]

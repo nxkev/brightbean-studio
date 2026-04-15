@@ -101,15 +101,14 @@ def verify_magic_link(token_string):
     if token.is_expired:
         return None, None, False
 
+    # Reject already-consumed tokens — a magic link is single-use
+    if token.is_consumed:
+        return None, None, False
+
     # Mark as consumed on first use
-    if not token.is_consumed:
-        token.is_consumed = True
-        token.last_used_at = timezone.now()
-        token.save(update_fields=["is_consumed", "last_used_at"])
-    else:
-        # Already consumed - update last_used_at
-        token.last_used_at = timezone.now()
-        token.save(update_fields=["last_used_at"])
+    token.is_consumed = True
+    token.last_used_at = timezone.now()
+    token.save(update_fields=["is_consumed", "last_used_at"])
 
     return token.user, token.workspace, True
 

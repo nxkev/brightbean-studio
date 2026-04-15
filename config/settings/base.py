@@ -134,6 +134,8 @@ AUTH_USER_MODEL = "accounts.User"
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 # Password hashing - bcrypt with cost factor 12
@@ -248,12 +250,12 @@ TAILWIND_APP_NAME = "theme"
 # CSP - Using Alpine.js CSP build (@alpinejs/csp) which does not require
 # unsafe-eval. Styles use unsafe-inline because Tailwind utility classes are inline.
 CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'",)  # Alpine.js CSP build (@alpinejs/csp) eliminates unsafe-eval
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")  # Alpine.js requires unsafe-eval for x-data/x-show expressions; inline scripts for component definitions
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # Tailwind inline styles
 CSP_IMG_SRC = ("'self'", "data:", "https:")
 CSP_FONT_SRC = ("'self'",)
 CSP_CONNECT_SRC = ("'self'",)
-CSP_FORM_ACTION = ("'self'", "https://accounts.google.com")
+CSP_FORM_ACTION = ("'self'", "https://accounts.google.com", "https://www.facebook.com", "https://api.instagram.com", "https://www.threads.net", "https://www.linkedin.com", "https://www.tiktok.com", "https://accounts.google.com", "https://www.pinterest.com", "https://bsky.app")
 
 # Media Library
 MEDIA_LIBRARY_MAX_IMAGE_SIZE = 20 * 1024 * 1024  # 20MB

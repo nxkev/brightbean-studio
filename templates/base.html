@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
     <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
     <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="{% static 'js/vendor/flatpickr.min.css' %}">
     <script>
         // Set sidebar state class on <html> before first paint to prevent flash
         if (localStorage.getItem('sidebarCollapsed') === 'true') {
@@ -887,7 +887,7 @@
         });
     </script>
     <script src="{% static 'js/alpine.min.js' %}" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+    <script src="{% static 'js/vendor/flatpickr.min.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.form-datetime[type="date"]').forEach(function(el) {

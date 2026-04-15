@@ -262,6 +262,8 @@ def _dispatch_webhook(delivery: NotificationDelivery) -> None:
     """Send notification via webhook (HTTP POST with HMAC-SHA256 signature)."""
     import urllib.request
 
+    from apps.common.validators import is_safe_url
+
     notification = delivery.notification
 
     payload = json.dumps(
@@ -281,7 +283,14 @@ def _dispatch_webhook(delivery: NotificationDelivery) -> None:
         logger.info("No webhook_url in notification data, skipping webhook delivery")
         return
 
-    webhook_secret = getattr(settings, "WEBHOOK_SECRET", settings.SECRET_KEY)
+    if not is_safe_url(webhook_url):
+        logger.warning("Webhook URL failed SSRF check: %s", webhook_url)
+        raise RuntimeError(f"Webhook URL is not allowed (SSRF protection): {webhook_url}")
+
+    webhook_secret = getattr(settings, "WEBHOOK_SECRET", "")
+    if not webhook_secret:
+        logger.error("WEBHOOK_SECRET is not configured — refusing to sign with SECRET_KEY")
+        raise RuntimeError("WEBHOOK_SECRET must be set to use webhook delivery")
     signature = hmac.new(
         webhook_secret.encode("utf-8"),
         payload,

@@ -1,6 +1,7 @@
 import hashlib
 
 from django.core.cache import cache
+from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -57,13 +58,60 @@ class AuthRateLimitMiddleware:
             ip = self._get_client_ip(request)
             cache_key = f"auth_ratelimit:{hashlib.md5(ip.encode()).hexdigest()}"
 
-            attempts = cache.get(cache_key, 0)
-            if attempts >= AUTH_RATE_LIMIT:
-                return HttpResponse("Too many requests. Please try again later.", status=429)
-
-            cache.set(cache_key, attempts + 1, AUTH_RATE_WINDOW)
+            if self._is_shared_cache():
+                # Redis or another shared cache — safe across workers
+                attempts = cache.get(cache_key, 0)
+                if attempts >= AUTH_RATE_LIMIT:
+                    return HttpResponse("Too many requests. Please try again later.", status=429)
+                cache.set(cache_key, attempts + 1, AUTH_RATE_WINDOW)
+            else:
+                # LocMemCache is per-process — use database for cross-worker accuracy
+                if self._db_rate_limit_exceeded(cache_key):
+                    return HttpResponse("Too many requests. Please try again later.", status=429)
 
         return self.get_response(request)
+
+    @staticmethod
+    def _is_shared_cache():
+        """Check if the default cache backend is shared across processes."""
+        backend = cache.__class__.__module__ + "." + cache.__class__.__name__
+        return "locmem" not in backend.lower()
+
+    @staticmethod
+    def _db_rate_limit_exceeded(cache_key):
+        """Database-backed rate limit check using django_session table pattern.
+
+        Uses a lightweight SQL approach that works across all gunicorn workers.
+        """
+        from django.utils import timezone as tz
+        from datetime import timedelta
+
+        window_start = tz.now() - timedelta(seconds=AUTH_RATE_WINDOW)
+
+        with connection.cursor() as cursor:
+            # Create rate limit table if it doesn't exist (idempotent)
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS auth_rate_limit (
+                    cache_key VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )"""
+            )
+            # Purge expired entries
+            cursor.execute("DELETE FROM auth_rate_limit WHERE created_at < %s", [window_start])
+            # Count recent attempts
+            cursor.execute(
+                "SELECT COUNT(*) FROM auth_rate_limit WHERE cache_key = %s AND created_at >= %s",
+                [cache_key, window_start],
+            )
+            count = cursor.fetchone()[0]
+            if count >= AUTH_RATE_LIMIT:
+                return True
+            # Record this attempt
+            cursor.execute(
+                "INSERT INTO auth_rate_limit (cache_key, created_at) VALUES (%s, %s)",
+                [cache_key, tz.now()],
+            )
+        return False
 
     @staticmethod
     def _get_client_ip(request):

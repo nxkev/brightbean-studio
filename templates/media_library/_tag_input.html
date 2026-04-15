@@ -1,6 +1,7 @@
 {% comment %}Tag editor with autocomplete. Expects: asset, workspace{% endcomment %}
 
-<div x-data="tagInput({{ asset.tags|safe }})" class="space-y-2">
+{{ asset.tags|json_script:"asset-tags-data" }}
+<div x-data="tagInput(JSON.parse(document.getElementById('asset-tags-data').textContent) || [])" class="space-y-2">
   <!-- Current tags -->
   <div class="flex flex-wrap gap-1.5">
     <template x-for="(tag, i) in tags" :key="i">
