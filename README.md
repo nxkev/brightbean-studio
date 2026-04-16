@@ -99,6 +99,8 @@ After deploying, set these environment variables in your platform's dashboard:
 | `EMAIL_HOST_PASSWORD` | No | SMTP password |
 | `GOOGLE_AUTH_CLIENT_ID` | No | For Google OAuth login. Get from [Google Cloud Console](https://console.cloud.google.com/) → Credentials. |
 | `GOOGLE_AUTH_CLIENT_SECRET` | No | Google OAuth secret |
+| `API_KEY` | No | Bearer token for the REST API (`/api/v1/`). If not set, all API requests return 401. |
+| `WEBHOOK_SECRET` | If using webhooks | HMAC secret used to sign outbound webhook payloads (`X-Signature-256` header). Required when any user has webhook notifications enabled — requests will fail at runtime if this is unset. |
 
 For social media API keys, see [Platform Credentials](#platform-credentials). Full variable reference: `.env.example`.
 
@@ -314,6 +316,7 @@ brightbean-studio/
 │   ├── members/               # RBAC, invitations, middleware, decorators
 │   ├── settings_manager/      # Configurable defaults with cascade logic
 │   ├── credentials/           # Platform API credential storage (encrypted)
+│   ├── api/                   # REST API (v1) — see docs/API.md
 │   └── common/                # Shared: encrypted fields, scoped model managers
 ├── providers/                 # Social platform API modules (one file per platform)
 ├── templates/                 # Django templates

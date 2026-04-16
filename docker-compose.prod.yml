@@ -47,6 +47,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+      - media_data:/app/media
     depends_on:
       - app
     restart: unless-stopped

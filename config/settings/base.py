@@ -182,6 +182,9 @@ if STORAGE_BACKEND == "s3":
 else:
     MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media"))
     MEDIA_URL = "/media/"
+    STORAGES["default"] = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -255,7 +258,7 @@ CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # Tailwind inline styles
 CSP_IMG_SRC = ("'self'", "data:", "https:")
 CSP_FONT_SRC = ("'self'",)
 CSP_CONNECT_SRC = ("'self'",)
-CSP_FORM_ACTION = ("'self'", "https://accounts.google.com", "https://www.facebook.com", "https://api.instagram.com", "https://www.threads.net", "https://www.linkedin.com", "https://www.tiktok.com", "https://accounts.google.com", "https://www.pinterest.com", "https://bsky.app")
+CSP_FORM_ACTION = ("'self'", "https:")
 
 # Media Library
 MEDIA_LIBRARY_MAX_IMAGE_SIZE = 20 * 1024 * 1024  # 20MB
@@ -328,9 +331,16 @@ PLATFORM_CREDENTIALS_FROM_ENV = {
     },
 }
 
-# Webhook verification
+# Inbound webhook verification tokens
 FACEBOOK_WEBHOOK_VERIFY_TOKEN = env("FACEBOOK_WEBHOOK_VERIFY_TOKEN", default="")
 YOUTUBE_WEBHOOK_SECRET = env("YOUTUBE_WEBHOOK_SECRET", default="")
+
+# Outbound webhook signing secret — required when webhook notifications are used.
+# engine.py raises RuntimeError at delivery time if this is not set.
+WEBHOOK_SECRET = env("WEBHOOK_SECRET", default="")
+
+# REST API
+API_KEY = env("API_KEY", default="")
 
 # Rate limiting
 RATELIMIT_ENABLE = not DEBUG
