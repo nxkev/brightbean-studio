@@ -124,14 +124,19 @@ def upload_media(request):
 
     uploaded = request.FILES["file"]
 
-    # Determine media type from content type
-    content_type = uploaded.content_type or ""
-    if content_type.startswith("image/"):
-        media_type = "image"
-    elif content_type.startswith("video/"):
-        media_type = "video"
+    # Detect media type from file magic bytes (not browser-supplied Content-Type)
+    from apps.media_library.validators import _detect_mime_from_bytes, determine_file_type
+
+    detected_mime = _detect_mime_from_bytes(uploaded)
+    if detected_mime:
+        media_type = determine_file_type(detected_mime) or "image"
+        content_type = detected_mime
     else:
-        media_type = "image"  # default
+        content_type = uploaded.content_type or ""
+        if content_type.startswith("video/"):
+            media_type = "video"
+        else:
+            media_type = "image"
 
     from apps.workspaces.models import Workspace
 
