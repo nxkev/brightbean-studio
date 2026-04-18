@@ -54,6 +54,10 @@ Content-Type: multipart/form-data
 - `file` (required) — the image or video file
 - `workspace_id` (required) — workspace UUID
 
+Media type is auto-detected from file content (magic bytes), not the `Content-Type` header. Supported types: JPEG, PNG, WebP, GIF, MP4, QuickTime, AVI, WebM, PDF.
+
+Files are uploaded to Cloudflare R2 and served publicly via `ig.tinym.ca`.
+
 **Response (201):**
 ```json
 {
@@ -61,7 +65,7 @@ Content-Type: multipart/form-data
   "filename": "photo.png",
   "media_type": "image",
   "file_size": 245760,
-  "url": "/media/media_library/2026/04/photo.png"
+  "url": "https://ig.tinym.ca/media_library/2026/04/photo.png"
 }
 ```
 
@@ -136,7 +140,7 @@ Content-Type: application/json
       "id": "uuid",
       "filename": "photo.png",
       "media_type": "image",
-      "url": "/media/media_library/2026/04/photo.png",
+      "url": "https://ig.tinym.ca/media_library/2026/04/photo.png",
       "position": 0
     }
   ]

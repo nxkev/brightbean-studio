@@ -18,15 +18,29 @@ Django project (see `manage.py`, `pyproject.toml`, `requirements.txt`).
 - Reserve Opus for complex architectural decisions, nuanced code review, or tasks requiring deep reasoning.
 - Use Haiku for simple lookups or lightweight operations when available.
 
-## Known Issues
+## Infrastructure
 
-### Instagram Scheduled Post Failure (2026-04-17)
+### Media Storage (Cloudflare R2)
 
-- **Error:** `"The media could not be fetched from this URI: https://marketing.minicart.com/media/media_library/2026/04/image_kttME6Q.png … Only photo or video can be accepted as media type."`
-- **Scheduled:** 2026-04-17 10am ET — post failed to publish
-- **Caption:** "Something new is brewing…" (Day 1 caption, not Day 2 — schedule is offset by one day vs launch-content folder labels)
-- **Root cause:** Instagram Graph API couldn't fetch the image at publish time. URL is valid, Content-Type is `image/png`, file was uploaded days prior. Likely a transient fetch failure on Instagram's side — Caddy config has no blocking/rate limiting.
-- **Additional issues:**
-  - All scheduled BrightBean media still uses the old dark DSLR images, not the new cream/mint set
-  - Day-label offset: scheduled posts are off by one day vs the launch-content folder labels
-- **Status:** Unresolved — needs retry/reschedule with corrected images and day alignment
+- **Backend:** `STORAGE_BACKEND=s3` using `django-storages` with Cloudflare R2
+- **Bucket:** `marketing-minicart-com`
+- **Public domain:** `ig.tinym.ca` (used as `S3_CUSTOM_DOMAIN`)
+- **ACL:** `public-read`, no signed URLs (`AWS_QUERYSTRING_AUTH=False`)
+- **Media URLs:** `https://ig.tinym.ca/media_library/YYYY/MM/<filename>`
+- **Deployed on:** DigitalOcean Droplet at `45.55.164.155` (SSH as `root`), Docker Compose
+
+### Deployment
+
+- **Server:** `ssh root@45.55.164.155`
+- **App dir:** `/root/brightbean-studio`
+- **Deploy:** `git pull origin main && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
+- **Services:** app (gunicorn), worker (background tasks), caddy (reverse proxy/TLS), postgres, maintenance
+
+## Resolved Issues
+
+### Instagram Scheduled Post Failure (2026-04-17) — RESOLVED 2026-04-18
+
+- **Original error:** Instagram Graph API couldn't fetch media from local storage (`marketing.minicart.com/media/...`)
+- **Fix:** Migrated media storage from local filesystem to Cloudflare R2 with public CDN domain `ig.tinym.ca`
+- **Also fixed:** API upload was mislabeling videos as `image` (used browser Content-Type instead of magic bytes). Now uses `_detect_mime_from_bytes` for accurate detection.
+- **Remaining:** Old scheduled posts using local storage URLs need to be deleted and rescheduled with R2-hosted media. Day-label offset in captions still needs correction.
