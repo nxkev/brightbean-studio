@@ -173,9 +173,8 @@ if STORAGE_BACKEND == "s3":
     AWS_S3_CUSTOM_DOMAIN = env("S3_CUSTOM_DOMAIN", default="")
     AWS_S3_REGION_NAME = env("S3_REGION_NAME", default="auto")
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = "private"
-    AWS_QUERYSTRING_AUTH = True
-    AWS_QUERYSTRING_EXPIRE = 3600  # 1-hour expiry for presigned URLs
+    AWS_DEFAULT_ACL = "public-read"
+    AWS_QUERYSTRING_AUTH = False
     AWS_S3_OBJECT_PARAMETERS = {
         "CacheControl": "max-age=86400",
     }
