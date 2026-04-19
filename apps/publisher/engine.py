@@ -462,6 +462,8 @@ class PublishEngine:
 
         # 4. Fallback based on first media type
         if first_media_type == "video":
+            if platform in ("instagram", "instagram_personal"):
+                return PostType.REEL
             return PostType.VIDEO
         if first_media_type == "image":
             return PostType.IMAGE
