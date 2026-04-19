@@ -256,6 +256,7 @@ CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")  # Alpine.js req
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # Tailwind inline styles
 CSP_IMG_SRC = ("'self'", "data:", "https:")
 CSP_FONT_SRC = ("'self'",)
+CSP_MEDIA_SRC = ("'self'", "https:")
 CSP_CONNECT_SRC = ("'self'",)
 CSP_FORM_ACTION = ("'self'", "https:")
 
