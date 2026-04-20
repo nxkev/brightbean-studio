@@ -96,6 +96,7 @@ class SocialAccount(models.Model):
         "bluesky": 300,
         "google_business": 1500,
         "mastodon": 500,
+        "twitter": 280,
     }
 
     @property
@@ -157,6 +158,7 @@ class SocialAccount(models.Model):
             "bluesky": "bs",
             "google_business": "gb",
             "mastodon": "ma",
+            "twitter": "x",
         }
         return icons.get(self.platform, self.platform[:2])
 

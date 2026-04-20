@@ -177,7 +177,17 @@ def connect_platform(request, workspace_id):
     }
 
     redirect_uri = _build_redirect_uri(request, platform)
-    auth_url = provider.get_auth_url(redirect_uri, state)
+
+    # Twitter/X requires PKCE — generate and store code_verifier in session
+    if platform == PlatformCredential.Platform.TWITTER:
+        from providers.twitter import TwitterProvider
+
+        code_verifier, code_challenge = TwitterProvider.generate_pkce_pair()
+        request.session[OAUTH_SESSION_KEY]["code_verifier"] = code_verifier
+        auth_url = provider.get_auth_url(redirect_uri, state, code_challenge=code_challenge)
+    else:
+        auth_url = provider.get_auth_url(redirect_uri, state)
+
     return redirect(auth_url)
 
 
@@ -258,7 +268,14 @@ def oauth_callback(request, platform):
 
         provider = _get_provider_for_platform(platform, request.org.id, **extra_creds)
         redirect_uri = _build_redirect_uri(request, platform)
-        tokens = provider.exchange_code(code, redirect_uri)
+
+        # Pass PKCE code_verifier for Twitter/X
+        exchange_kwargs = {}
+        code_verifier = session_data.get("code_verifier")
+        if code_verifier:
+            exchange_kwargs["code_verifier"] = code_verifier
+
+        tokens = provider.exchange_code(code, redirect_uri, **exchange_kwargs)
         profile = provider.get_profile(tokens.access_token)
 
         # Facebook/Instagram: only connect Pages, not personal profiles

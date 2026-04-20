@@ -85,12 +85,18 @@ class SocialProvider(ABC):
     # OAuth methods (override for OAuth providers)
     # ------------------------------------------------------------------
 
-    def get_auth_url(self, redirect_uri: str, state: str) -> str:
-        """Generate the OAuth authorization URL."""
+    def get_auth_url(self, redirect_uri: str, state: str, **kwargs) -> str:
+        """Generate the OAuth authorization URL.
+
+        Subclasses may accept additional kwargs (e.g. code_challenge for PKCE).
+        """
         raise NotImplementedError(f"{self.platform_name} does not implement get_auth_url")
 
-    def exchange_code(self, code: str, redirect_uri: str) -> OAuthTokens:
-        """Exchange an authorization code for access tokens."""
+    def exchange_code(self, code: str, redirect_uri: str, **kwargs) -> OAuthTokens:
+        """Exchange an authorization code for access tokens.
+
+        Subclasses may accept additional kwargs (e.g. code_verifier for PKCE).
+        """
         raise NotImplementedError(f"{self.platform_name} does not implement exchange_code")
 
     def refresh_token(self, refresh_token: str) -> OAuthTokens:
